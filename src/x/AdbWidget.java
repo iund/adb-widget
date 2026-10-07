@@ -56,6 +56,19 @@ public class AdbWidget extends BroadcastReceiver {
         catch (Throwable t) { return false; }
     }
 
+    static final int GREY = 0xCC555555, DARK = 0xCC1A1A1A, BLUE = 0xCC2F5D8A;
+
+    static void render(Context c, String text, int bg) {
+        RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget);
+        v.setTextViewText(R.id.t, text);
+        v.setInt(R.id.t, "setBackgroundColor", bg);
+        v.setOnClickPendingIntent(R.id.t, PendingIntent.getBroadcast(c, 0,
+            new Intent(c, AdbWidget.class).setAction("x.adbwifi.TOGGLE"),
+            PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= 23 ? 0x04000000 : 0)));
+        AppWidgetManager m = AppWidgetManager.getInstance(c);
+        m.updateAppWidget(m.getAppWidgetIds(new ComponentName(c, AdbWidget.class)), v);
+    }
+
     static void later(Context c, int code, int ms, int n) {
         Intent i = new Intent(c, AdbWidget.class).setAction("x.adbwifi.REFRESH").putExtra("n", n);
         ((AlarmManager) c.getSystemService(Context.ALARM_SERVICE)).set(AlarmManager.RTC,
@@ -80,6 +93,8 @@ public class AdbWidget extends BroadcastReceiver {
             } else if (act.equals(Intent.ACTION_BOOT_COMPLETED)) {
                 if (enabled && sp.getBoolean("root", true)) applyAdb(c, true, port);
             } else if (act.equals("x.adbwifi.TOGGLE")) {
+                String ip0 = ip(c);
+                render(c, ip0 == null ? "No network" : ip0 + "\n ", GREY);   // working: address only, second line blank
                 boolean root = sp.getBoolean("root", true);
                 enabled = root ? !enabled : !wirelessOn(c);
                 sp.edit().putBoolean("enabled", enabled).commit();
@@ -100,18 +115,11 @@ public class AdbWidget extends BroadcastReceiver {
             boolean on = ip != null && listening(ip, port);
             Log.i(TAG, act + " ip=" + ip + " port=" + port + " enabled=" + enabled + " on=" + on);
             String text; int bg;
-            if (ip == null) { text = "No network"; bg = 0xCC555555; }
-            else if (on) { text = ip + ":" + port + "\nON"; bg = 0xCC2F5D8A; }
-            else { text = ip + ":" + port + "\nOFF"; bg = 0xCC555555; }
+            if (ip == null) { text = "No network"; bg = GREY; }
+            else if (on) { text = ip + ":" + port + "\nON"; bg = BLUE; }
+            else { text = ip + ":" + port + "\nOFF"; bg = DARK; }
 
-            RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget);
-            v.setTextViewText(R.id.t, text);
-            v.setInt(R.id.t, "setBackgroundColor", bg);
-            v.setOnClickPendingIntent(R.id.t, PendingIntent.getBroadcast(c, 0,
-                new Intent(c, AdbWidget.class).setAction("x.adbwifi.TOGGLE"),
-                PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= 23 ? 0x04000000 : 0)));
-            AppWidgetManager m = AppWidgetManager.getInstance(c);
-            m.updateAppWidget(m.getAppWidgetIds(new ComponentName(c, AdbWidget.class)), v);
+            render(c, text, bg);
 
             // not settled yet (wifi/adbd still coming up): look again shortly
             if ((ip == null || on != enabled) && n < 12) later(c, 1, 10000, n + 1);
