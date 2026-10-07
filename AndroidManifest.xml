@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="x.adbwifi">
+    <uses-sdk android:minSdkVersion="11" android:targetSdkVersion="28"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE"/>
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"/>
+    <application android:label="ADB WiFi">
+        <receiver android:name="x.AdbWidget" android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE"/>
+                <action android:name="android.net.wifi.STATE_CHANGE"/>
+                <action android:name="android.net.wifi.WIFI_STATE_CHANGED"/>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="x.adbwifi.REFRESH"/>
+                <action android:name="x.adbwifi.TOGGLE"/>
+                <action android:name="x.adbwifi.CONFIG"/>
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget"/>
+        </receiver>
+    </application>
+</manifest>
